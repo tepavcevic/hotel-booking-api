@@ -16,6 +16,22 @@ func NewUserHandler(userStore db.UserStore) *UserHandler {
 	}
 }
 
+func (uh *UserHandler) HandleCreateUser(c *fiber.Ctx) error {
+	var params types.CreateUserParams
+	if err := c.BodyParser(&params); err != nil {
+		return err
+	}
+	user, err := types.NewUserFromParams(params)
+	if err != nil {
+		return err
+	}
+	dbUser, err := uh.userStore.CreateUser(c.Context(), user)
+	if err != nil {
+		return err
+	}
+	return c.JSON(dbUser)
+}
+
 func (uh *UserHandler) HandleGetUserById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	user, err := uh.userStore.GetUserById(c.Context(), id)
@@ -26,10 +42,9 @@ func (uh *UserHandler) HandleGetUserById(c *fiber.Ctx) error {
 }
 
 func (uh *UserHandler) HandleGetUsers(c *fiber.Ctx) error {
-	u := types.User{
-		ID:        "23456789",
-		FirstName: "James",
-		LastName:  "Smith",
+	users, err := uh.userStore.GetUsers(c.Context())
+	if err != nil {
+		return err
 	}
-	return c.JSON(u)
+	return c.JSON(users)
 }
