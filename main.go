@@ -38,7 +38,9 @@ func main() {
 	apiv1 := app.Group("/api/v1")
 
 	apiv1.Post("users", userHandler.HandleCreateUser)
-	apiv1.Get("/users", userHandler.HandleGetUsers)
 	apiv1.Get("/users/:id", userHandler.HandleGetUserById)
+	apiv1.Get("/users", userHandler.HandleGetUsers)
+	apiv1.Put("/users/:id", userHandler.HandleUpdateUser)
+	apiv1.Delete("/users/:id", userHandler.HandleDeleteUser)
 	app.Listen(*listenAddr)
 }

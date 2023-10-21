@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/mail"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -42,6 +43,22 @@ func (params CreateUserParams) Validate() map[string]string {
 func isEmailValid(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil
+}
+
+type UpdateUserParams struct {
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+}
+
+func (params UpdateUserParams) ToBSON() bson.M {
+	m := bson.M{}
+	if len(params.FirstName) > 0 {
+		m["firstName"] = params.FirstName
+	}
+	if len(params.LastName) > 0 {
+		m["lastName"] = params.LastName
+	}
+	return m
 }
 
 type User struct {
