@@ -10,9 +10,11 @@ import (
 )
 
 type HotelStore interface {
+	GetHotelById(context.Context, string) (*types.Hotel, error)
 	GetHotels(context.Context, bson.M) ([]*types.Hotel, error)
 	Create(context.Context, *types.Hotel) (*types.Hotel, error)
 	Update(context.Context, bson.M, bson.M) error
+	Delete(context.Context, string) error
 }
 
 type MongoHotelStore struct {
@@ -25,6 +27,19 @@ func NewMongoHotelStore(c *mongo.Client, dbname, collName string) *MongoHotelSto
 		client: c,
 		coll:   c.Database(dbname).Collection(collName),
 	}
+}
+
+func (store *MongoHotelStore) GetHotelById(ctx context.Context, id string) (*types.Hotel, error) {
+	var hotel *types.Hotel
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+	dbhotel := store.coll.FindOne(ctx, bson.M{"_id": oid})
+	if err := dbhotel.Decode(&hotel); err != nil {
+		return nil, err
+	}
+	return hotel, nil
 }
 
 func (store *MongoHotelStore) GetHotels(ctx context.Context, filter bson.M) ([]*types.Hotel, error) {
@@ -51,4 +66,8 @@ func (store *MongoHotelStore) Create(ctx context.Context, hotel *types.Hotel) (*
 func (store *MongoHotelStore) Update(ctx context.Context, filter, update bson.M) error {
 	_, err := store.coll.UpdateOne(ctx, filter, update)
 	return err
+}
+
+func (store *MongoHotelStore) Delete(ctx context.Context, id string) error {
+	return nil
 }
