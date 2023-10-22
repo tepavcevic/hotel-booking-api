@@ -17,9 +17,13 @@ func NewHotelHandler(store *db.Store) *HotelHandler {
 	}
 }
 
-func (h *HotelHandler) HandleGetHotelById(c *fiber.Ctx) error {
+func (h *HotelHandler) HandleGetHotelByID(c *fiber.Ctx) error {
 	id := c.Params("id")
-	hotel, err := h.store.Hotel.GetHotelById(c.Context(), id)
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	hotel, err := h.store.Hotel.GetHotelByID(c.Context(), oid)
 	if err != nil {
 		return err
 	}

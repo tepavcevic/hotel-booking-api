@@ -55,7 +55,7 @@ func main() {
 	apiv1.Delete("/users/:id", userHandler.HandleDeleteUser)
 
 	apiv1.Get("/hotels", hotelHandler.HandleGetHotels)
-	apiv1.Get("/hotels/:id", hotelHandler.HandleGetHotelById)
+	apiv1.Get("/hotels/:id", hotelHandler.HandleGetHotelByID)
 	apiv1.Get("/hotels/:id/rooms", hotelHandler.HandleGetRooms)
 	app.Listen(*listenAddr)
 }

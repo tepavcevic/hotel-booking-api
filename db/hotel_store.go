@@ -10,7 +10,7 @@ import (
 )
 
 type HotelStore interface {
-	GetHotelById(context.Context, string) (*types.Hotel, error)
+	GetHotelByID(context.Context, primitive.ObjectID) (*types.Hotel, error)
 	GetHotels(context.Context, bson.M) ([]*types.Hotel, error)
 	Create(context.Context, *types.Hotel) (*types.Hotel, error)
 	Update(context.Context, bson.M, bson.M) error
@@ -29,12 +29,8 @@ func NewMongoHotelStore(c *mongo.Client, dbname, collName string) *MongoHotelSto
 	}
 }
 
-func (store *MongoHotelStore) GetHotelById(ctx context.Context, id string) (*types.Hotel, error) {
+func (store *MongoHotelStore) GetHotelByID(ctx context.Context, oid primitive.ObjectID) (*types.Hotel, error) {
 	var hotel *types.Hotel
-	oid, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return nil, err
-	}
 	dbhotel := store.coll.FindOne(ctx, bson.M{"_id": oid})
 	if err := dbhotel.Decode(&hotel); err != nil {
 		return nil, err
