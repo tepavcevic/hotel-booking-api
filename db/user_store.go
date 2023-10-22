@@ -10,7 +10,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
+type Dropper interface {
+	Drop(context.Context) error
+}
+
 type UserStore interface {
+	Dropper
+
 	GetUserById(context.Context, string) (*types.User, error)
 	GetUsers(context.Context) ([]*types.User, error)
 	CreateUser(context.Context, *types.User) (*types.User, error)
@@ -28,6 +34,11 @@ func NewMongoUserStore(c *mongo.Client, dbname string, collName string) *MongoUs
 		client: c,
 		coll:   c.Database(dbname).Collection(collName),
 	}
+}
+
+func (store *MongoUserStore) Drop(ctx context.Context) error {
+	fmt.Println("--- dropping user collection")
+	return store.coll.Drop(ctx)
 }
 
 func (store *MongoUserStore) CreateUser(ctx context.Context, user *types.User) (*types.User, error) {
