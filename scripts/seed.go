@@ -43,7 +43,7 @@ func seedHotel(name, location string) {
 			BasePrice: 165,
 		},
 	}
-	dbHotel, err := hotelStore.CreateHotel(ctx, &hotel)
+	dbHotel, err := hotelStore.Create(ctx, &hotel)
 	if err != nil {
 		log.Fatal(err)
 	}
