@@ -6,22 +6,31 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/tepavcevic/hotel-reservation/db"
 )
 
-func JWTAuthentication(c *fiber.Ctx) error {
-	token, ok := c.GetReqHeaders()["Authorization"]
-	if !ok {
-		return fmt.Errorf("unauthorized")
+func JWTAuthentication(userStore db.UserStore) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		token, ok := c.GetReqHeaders()["Authorization"]
+		if !ok {
+			return fmt.Errorf("unauthorized")
+		}
+		claims, err := validateToken(token[0])
+		if err != nil {
+			return err
+		}
+		expires := claims["expires"].(float64)
+		if time.Now().Unix() > int64(expires) {
+			return fmt.Errorf("token expires, please sign in")
+		}
+		userID := claims["userID"].(string)
+		user, err := userStore.GetUserById(c.Context(), userID)
+		if err != nil {
+			return fmt.Errorf("unauthorized")
+		}
+		c.Context().SetUserValue("user", user)
+		return c.Next()
 	}
-	claims, err := validateToken(token[0])
-	if err != nil {
-		return err
-	}
-	expires := claims["expires"].(float64)
-	if time.Now().Unix() > int64(expires) {
-		return fmt.Errorf("token expires, please sign in")
-	}
-	return c.Next()
 }
 
 func validateToken(tokenString string) (jwt.MapClaims, error) {
