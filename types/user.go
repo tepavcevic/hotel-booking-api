@@ -39,7 +39,9 @@ func (params CreateUserParams) Validate() map[string]string {
 	}
 	return errors
 }
-
+func IsValidPassword(passwordHash, password string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password)) == nil
+}
 func isEmailValid(email string) bool {
 	_, err := mail.ParseAddress(email)
 	return err == nil

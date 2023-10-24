@@ -14,14 +14,32 @@ import (
 const (
 	hotelCollName = "hotels"
 	roomCollName  = "rooms"
+	userCollName  = "users"
 )
 
 var (
 	client     *mongo.Client
 	roomStore  db.RoomStore
 	hotelStore db.HotelStore
+	userStore  db.UserStore
 	ctx        = context.Background()
 )
+
+func seedUser(email, firstName, lastName string) {
+	user, err := types.NewUserFromParams(types.CreateUserParams{
+		FirstName: firstName,
+		LastName:  lastName,
+		Email:     email,
+		Password:  "greatestpasswordever",
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = userStore.CreateUser(ctx, user)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
 
 func seedHotel(name, location string, rating int) {
 	hotel := types.Hotel{
@@ -65,6 +83,8 @@ func main() {
 	seedHotel("Transilvania", "Romania", 8)
 	seedHotel("Moskva", "Serbia", 7)
 	seedHotel("Swissotel", "Bosnia", 8)
+	seedUser("son@momoaa.com", "Momo", "Jsoon")
+	seedUser("mario@dreznjak.com", "Mario", "Dreznjak")
 }
 
 func init() {
@@ -75,10 +95,14 @@ func init() {
 	}
 	hotelStore = db.NewMongoHotelStore(client, db.DBNAME, hotelCollName)
 	roomStore = db.NewMongoRoomStore(client, db.DBNAME, roomCollName, hotelStore)
+	userStore = db.NewMongoUserStore(client, db.DBNAME, userCollName)
 	if err := client.Database(db.DBNAME).Collection(hotelCollName).Drop(ctx); err != nil {
 		log.Fatal(err)
 	}
 	if err := client.Database(db.DBNAME).Collection(roomCollName).Drop(ctx); err != nil {
+		log.Fatal(err)
+	}
+	if err := client.Database(db.DBNAME).Collection(userCollName).Drop(ctx); err != nil {
 		log.Fatal(err)
 	}
 }
