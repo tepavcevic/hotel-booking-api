@@ -96,7 +96,6 @@ func (rh *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n", booking)
 	return c.JSON(dbbooking)
 }
 
@@ -114,8 +113,6 @@ func (rh *RoomHandler) isRoomAvailableForBooking(ctx context.Context, roomOID pr
 	if err != nil {
 		return false, err
 	}
-	if len(bookings) > 0 {
-		return false, nil
-	}
-	return true, nil
+	ok := len(bookings) == 0
+	return ok, nil
 }
