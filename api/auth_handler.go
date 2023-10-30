@@ -58,7 +58,7 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	if !types.IsValidPassword(user.PasswordHash, authParams.Password) {
 		return invalidCredentials(c)
 	}
-	token, err := createTokenFromUser(user)
+	token := CreateTokenFromUser(user)
 	if err != nil {
 		return fmt.Errorf("authentication: %w", err)
 	}
@@ -69,7 +69,7 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	return c.JSON(authResponse)
 }
 
-func createTokenFromUser(user *types.User) (string, error) {
+func CreateTokenFromUser(user *types.User) string {
 	expires := time.Now().Add(4 * time.Hour).Unix()
 	claims := jwt.MapClaims{
 		"userID":  user.ID,
@@ -80,7 +80,7 @@ func createTokenFromUser(user *types.User) (string, error) {
 	secret := "dsds" // os.Getenv("JWT_SECRET")
 	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
-		return "", errors.New("failed to sign token")
+		fmt.Println("create token:", err)
 	}
-	return tokenStr, nil
+	return tokenStr
 }
