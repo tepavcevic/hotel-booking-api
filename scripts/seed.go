@@ -22,14 +22,13 @@ const (
 )
 
 var (
-	client     *mongo.Client
 	hotelStore db.HotelStore
-	ctx        = context.Background()
 )
 
 func main() {
+	ctx := context.Background()
 	var err error
-	client, err = mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DBURI))
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(db.DBURI))
 	if err != nil {
 		log.Fatal(err)
 	}

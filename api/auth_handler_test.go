@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -10,34 +9,16 @@ import (
 	"testing"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/tepavcevic/hotel-reservation/db"
-	"github.com/tepavcevic/hotel-reservation/types"
+	"github.com/tepavcevic/hotel-reservation/db/fixtures"
 )
-
-func insertTestUser(t *testing.T, userStore db.UserStore) *types.User {
-	user, err := types.NewUserFromParams(types.CreateUserParams{
-		FirstName: "Mario",
-		LastName:  "Dreznjak",
-		Email:     "mario@dreznjak.com",
-		Password:  "greatestpasswordever",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	dbuser, err := userStore.CreateUser(context.TODO(), user)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return dbuser
-}
 
 func TestAuthenticate(t *testing.T) {
 	tdb := setup(t)
 	defer tdb.teardown(t)
-	insertedUser := insertTestUser(t, tdb.UserStore)
+	insertedUser := fixtures.AddUser(tdb.Store, "Mario", "Dreznjak", true)
 
 	app := fiber.New()
-	authHandler := NewAuthHandler(tdb.UserStore)
+	authHandler := NewAuthHandler(tdb.User)
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
 	authParams := AuthParams{
@@ -73,10 +54,10 @@ func TestAuthenticate(t *testing.T) {
 func TestAuthenticatePasswordFailure(t *testing.T) {
 	tdb := setup(t)
 	defer tdb.teardown(t)
-	insertTestUser(t, tdb.UserStore)
+	fixtures.AddUser(tdb.Store, "Mario", "Dreznjak", true)
 
 	app := fiber.New()
-	authHandler := NewAuthHandler(tdb.UserStore)
+	authHandler := NewAuthHandler(tdb.User)
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
 	authParams := AuthParams{
