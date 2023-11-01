@@ -1,14 +1,11 @@
 package api
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/tepavcevic/hotel-reservation/db"
 	"github.com/tepavcevic/hotel-reservation/types"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type UserHandler struct {
@@ -33,7 +30,7 @@ func (uh *UserHandler) HandleCreateUser(c *fiber.Ctx) error {
 	if err != nil {
 		return fiber.ErrBadRequest
 	}
-	if foundUser.ID != primitive.NilObjectID {
+	if foundUser != nil {
 		return fiber.NewError(http.StatusConflict, "email taken")
 	}
 	user, err := types.NewUserFromParams(params)
@@ -51,10 +48,7 @@ func (uh *UserHandler) HandleGetUserById(c *fiber.Ctx) error {
 	id := c.Params("id")
 	user, err := uh.userStore.GetUserById(c.Context(), id)
 	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return fiber.NewError(404, "user not found")
-		}
-		return err
+		return fiber.NewError(http.StatusNotFound, err.Error())
 	}
 	return c.JSON(user)
 }
@@ -72,14 +66,10 @@ func (uh *UserHandler) HandleUpdateUser(c *fiber.Ctx) error {
 		params types.UpdateUserParams
 		userID = c.Params("id")
 	)
-	oid, err := primitive.ObjectIDFromHex(userID)
-	if err != nil {
-		return fiber.NewError(400, "invalid user id")
-	}
 	if err := c.BodyParser(&params); err != nil {
 		return fiber.ErrBadRequest
 	}
-	filter := db.Map{"_id": oid}
+	filter := db.Map{"_id": userID}
 	if err := uh.userStore.UpdateUser(c.Context(), filter, params); err != nil {
 		return err
 	}

@@ -48,8 +48,8 @@ func isEmailValid(email string) bool {
 }
 
 type UpdateUserParams struct {
-	FirstName string `json:"firstName"`
-	LastName  string `json:"lastName"`
+	FirstName string `bson:"firstname" json:"firstName"`
+	LastName  string `bson:"lastName" json:"lastName"`
 }
 
 func (params UpdateUserParams) ToBSON() bson.M {

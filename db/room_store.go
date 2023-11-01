@@ -11,7 +11,7 @@ import (
 
 type RoomStore interface {
 	CreateRoom(context.Context, *types.Room) (*types.Room, error)
-	GetRooms(context.Context, bson.M) ([]*types.Room, error)
+	GetRooms(context.Context, Map) ([]*types.Room, error)
 }
 
 type MongoRoomStore struct {
@@ -30,7 +30,7 @@ func NewMongoRoomStore(c *mongo.Client, dbname, collName string, hotelStore Hote
 	}
 }
 
-func (store *MongoRoomStore) GetRooms(ctx context.Context, filter bson.M) ([]*types.Room, error) {
+func (store *MongoRoomStore) GetRooms(ctx context.Context, filter Map) ([]*types.Room, error) {
 	var rooms []*types.Room
 	cur, err := store.coll.Find(ctx, filter)
 	if err != nil {
@@ -48,8 +48,8 @@ func (store *MongoRoomStore) CreateRoom(ctx context.Context, room *types.Room) (
 		return nil, err
 	}
 	room.ID = res.InsertedID.(primitive.ObjectID)
-	filter := bson.M{"_id": room.HotelID}
-	update := bson.M{"$push": bson.M{"rooms": room.ID}}
+	filter := Map{"_id": room.HotelID}
+	update := Map{"$push": bson.M{"rooms": room.ID}}
 	if err := store.HotelStore.Update(ctx, filter, update); err != nil {
 		return nil, err
 	}

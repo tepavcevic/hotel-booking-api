@@ -61,6 +61,9 @@ func (store *MongoUserStore) GetUserById(ctx context.Context, id string) (*types
 	}
 	var user types.User
 	if err := store.coll.FindOne(ctx, bson.M{"_id": oid}).Decode(&user); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, fmt.Errorf("user not found")
+		}
 		return nil, err
 	}
 	return &user, nil
@@ -90,10 +93,18 @@ func (store *MongoUserStore) GetUsers(ctx context.Context) ([]*types.User, error
 }
 
 func (store *MongoUserStore) UpdateUser(ctx context.Context, filter Map, params types.UpdateUserParams) error {
-	update := bson.M{"$set": params}
-	_, err := store.coll.UpdateOne(ctx, filter, update)
+	oid, err := primitive.ObjectIDFromHex(filter["_id"].(string))
 	if err != nil {
 		return err
+	}
+	filter["_id"] = oid
+	update := bson.M{"$set": params}
+	user, err := store.coll.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return err
+	}
+	if user.ModifiedCount == 0 {
+		return fmt.Errorf("user not updated")
 	}
 	return nil
 }

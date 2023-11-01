@@ -40,7 +40,7 @@ func NewRoomHandler(store *db.Store) *RoomHandler {
 }
 
 func (rh *RoomHandler) HandleGetRooms(c *fiber.Ctx) error {
-	rooms, err := rh.store.Room.GetRooms(c.Context(), bson.M{})
+	rooms, err := rh.store.Room.GetRooms(c.Context(), db.Map{})
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
 			return fiber.ErrNotFound
