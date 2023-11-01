@@ -46,7 +46,7 @@ func invalidCredentials(c *fiber.Ctx) error {
 func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	var authParams AuthParams
 	if err := c.BodyParser(&authParams); err != nil {
-		return err
+		return fiber.ErrBadRequest
 	}
 	user, err := ah.userStore.GetUserByEmail(c.Context(), authParams.Email)
 	if err != nil {
@@ -58,13 +58,9 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	if !types.IsValidPassword(user.PasswordHash, authParams.Password) {
 		return invalidCredentials(c)
 	}
-	token := CreateTokenFromUser(user)
-	if err != nil {
-		return fmt.Errorf("authentication: %w", err)
-	}
 	authResponse := AuthResponse{
 		User:  user,
-		Token: token,
+		Token: CreateTokenFromUser(user),
 	}
 	return c.JSON(authResponse)
 }

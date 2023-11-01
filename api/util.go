@@ -1,8 +1,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/tepavcevic/hotel-reservation/types"
 )
@@ -10,7 +8,7 @@ import (
 func getAuthUser(ctx *fiber.Ctx) (*types.User, error) {
 	user, ok := ctx.Context().UserValue("user").(*types.User)
 	if !ok {
-		return nil, fmt.Errorf("unauthorized")
+		return nil, fiber.ErrUnauthorized
 	}
 	return user, nil
 }

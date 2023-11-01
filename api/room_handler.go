@@ -43,10 +43,7 @@ func (rh *RoomHandler) HandleGetRooms(c *fiber.Ctx) error {
 	rooms, err := rh.store.Room.GetRooms(c.Context(), bson.M{})
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return c.Status(http.StatusNotFound).JSON(genericResponse{
-				Type:    "error",
-				Message: "no rooms found",
-			})
+			return fiber.ErrNotFound
 		}
 		return err
 	}
@@ -56,10 +53,7 @@ func (rh *RoomHandler) HandleGetRooms(c *fiber.Ctx) error {
 func (rh *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 	var params BookRoomParams
 	if err := c.BodyParser(&params); err != nil {
-		return c.Status(http.StatusBadRequest).JSON(genericResponse{
-			Type:    "error",
-			Message: "bad request",
-		})
+		return fiber.ErrBadRequest
 	}
 	if err := params.validate(); err != nil {
 		return err
@@ -70,20 +64,14 @@ func (rh *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 	}
 	user, ok := c.Context().UserValue("user").(*types.User)
 	if !ok {
-		return c.Status(http.StatusInternalServerError).JSON(genericResponse{
-			Type:    "error",
-			Message: "internal server error",
-		})
+		return fiber.ErrBadRequest
 	}
 	ok, err = rh.isRoomAvailableForBooking(c.Context(), roomOID, params)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return c.Status(http.StatusBadRequest).JSON(genericResponse{
-			Type:    "error",
-			Message: fmt.Sprintf("room %s is already booked for this period", c.Params("id")),
-		})
+		return fiber.NewError(http.StatusConflict, fmt.Sprintf("room %s is already booked for this period", roomOID.Hex()))
 	}
 	booking := types.Booking{
 		UserID:     user.ID,
@@ -92,11 +80,11 @@ func (rh *RoomHandler) HandleBookRoom(c *fiber.Ctx) error {
 		TillDate:   params.TillDate,
 		NumPersons: params.NumPersons,
 	}
-	dbbooking, err := rh.store.Booking.CreateBooking(c.Context(), &booking)
+	dbBooking, err := rh.store.Booking.CreateBooking(c.Context(), &booking)
 	if err != nil {
 		return err
 	}
-	return c.JSON(dbbooking)
+	return c.JSON(dbBooking)
 }
 
 func (rh *RoomHandler) isRoomAvailableForBooking(ctx context.Context, roomOID primitive.ObjectID, params BookRoomParams) (bool, error) {

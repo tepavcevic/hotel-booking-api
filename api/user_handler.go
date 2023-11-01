@@ -2,6 +2,7 @@ package api
 
 import (
 	"errors"
+	"net/http"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/tepavcevic/hotel-reservation/db"
@@ -24,14 +25,14 @@ func NewUserHandler(userStore db.UserStore) *UserHandler {
 func (uh *UserHandler) HandleCreateUser(c *fiber.Ctx) error {
 	var params types.CreateUserParams
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		return fiber.ErrBadRequest
 	}
 	if errs := params.Validate(); len(errs) > 0 {
-		return c.JSON(errs)
+		return c.Status(http.StatusBadRequest).JSON(errs)
 	}
 	user, err := types.NewUserFromParams(params)
 	if err != nil {
-		return err
+		return fiber.ErrBadRequest
 	}
 	dbUser, err := uh.userStore.CreateUser(c.Context(), user)
 	if err != nil {
@@ -45,7 +46,7 @@ func (uh *UserHandler) HandleGetUserById(c *fiber.Ctx) error {
 	user, err := uh.userStore.GetUserById(c.Context(), id)
 	if err != nil {
 		if errors.Is(err, mongo.ErrNoDocuments) {
-			return errors.New("user not found")
+			return fiber.NewError(404, "user not found")
 		}
 		return err
 	}
@@ -55,29 +56,31 @@ func (uh *UserHandler) HandleGetUserById(c *fiber.Ctx) error {
 func (uh *UserHandler) HandleGetUsers(c *fiber.Ctx) error {
 	users, err := uh.userStore.GetUsers(c.Context())
 	if err != nil {
-		return err
+		return fiber.ErrNotFound
 	}
 	return c.JSON(users)
 }
 
 func (uh *UserHandler) HandleUpdateUser(c *fiber.Ctx) error {
 	var (
-		// values bson.M
 		params types.UpdateUserParams
 		userID = c.Params("id")
 	)
 	oid, err := primitive.ObjectIDFromHex(userID)
 	if err != nil {
-		return err
+		return fiber.NewError(400, "invalid user id")
 	}
 	if err := c.BodyParser(&params); err != nil {
-		return err
+		return fiber.ErrBadRequest
 	}
 	filter := bson.M{"_id": oid}
 	if err := uh.userStore.UpdateUser(c.Context(), filter, params); err != nil {
 		return err
 	}
-	return c.JSON(map[string]string{"message": "user successfully updated"})
+	return c.JSON(genericResponse{
+		Type:    "message",
+		Message: "user successfully updated",
+	})
 }
 
 func (uh *UserHandler) HandleDeleteUser(c *fiber.Ctx) error {
@@ -85,5 +88,8 @@ func (uh *UserHandler) HandleDeleteUser(c *fiber.Ctx) error {
 	if err := uh.userStore.DeleteUser(c.Context(), userID); err != nil {
 		return err
 	}
-	return c.JSON(map[string]string{"message": "user successfully deleted"})
+	return c.JSON(genericResponse{
+		Type:    "message",
+		Message: "user successfully deleted",
+	})
 }
