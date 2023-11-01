@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/tepavcevic/hotel-reservation/types"
@@ -14,6 +15,8 @@ type Dropper interface {
 	Drop(context.Context) error
 }
 
+type Map map[string]any
+
 type UserStore interface {
 	Dropper
 
@@ -22,7 +25,7 @@ type UserStore interface {
 	GetUsers(context.Context) ([]*types.User, error)
 	CreateUser(context.Context, *types.User) (*types.User, error)
 	DeleteUser(context.Context, string) error
-	UpdateUser(context.Context, bson.M, types.UpdateUserParams) error
+	UpdateUser(context.Context, Map, types.UpdateUserParams) error
 }
 
 type MongoUserStore struct {
@@ -66,6 +69,9 @@ func (store *MongoUserStore) GetUserById(ctx context.Context, id string) (*types
 func (store *MongoUserStore) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
 	var user types.User
 	if err := store.coll.FindOne(ctx, bson.M{"email": email}).Decode(&user); err != nil {
+		if errors.Is(err, mongo.ErrNoDocuments) {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &user, nil
@@ -83,7 +89,7 @@ func (store *MongoUserStore) GetUsers(ctx context.Context) ([]*types.User, error
 	return users, nil
 }
 
-func (store *MongoUserStore) UpdateUser(ctx context.Context, filter bson.M, params types.UpdateUserParams) error {
+func (store *MongoUserStore) UpdateUser(ctx context.Context, filter Map, params types.UpdateUserParams) error {
 	update := bson.M{"$set": params}
 	_, err := store.coll.UpdateOne(ctx, filter, update)
 	if err != nil {

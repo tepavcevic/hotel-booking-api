@@ -7,7 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/tepavcevic/hotel-reservation/db"
 	"github.com/tepavcevic/hotel-reservation/types"
-	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -29,6 +28,13 @@ func (uh *UserHandler) HandleCreateUser(c *fiber.Ctx) error {
 	}
 	if errs := params.Validate(); len(errs) > 0 {
 		return c.Status(http.StatusBadRequest).JSON(errs)
+	}
+	foundUser, err := uh.userStore.GetUserByEmail(c.Context(), params.Email)
+	if err != nil {
+		return fiber.ErrBadRequest
+	}
+	if foundUser.ID != primitive.NilObjectID {
+		return fiber.NewError(http.StatusConflict, "email taken")
 	}
 	user, err := types.NewUserFromParams(params)
 	if err != nil {
@@ -73,7 +79,7 @@ func (uh *UserHandler) HandleUpdateUser(c *fiber.Ctx) error {
 	if err := c.BodyParser(&params); err != nil {
 		return fiber.ErrBadRequest
 	}
-	filter := bson.M{"_id": oid}
+	filter := db.Map{"_id": oid}
 	if err := uh.userStore.UpdateUser(c.Context(), filter, params); err != nil {
 		return err
 	}
