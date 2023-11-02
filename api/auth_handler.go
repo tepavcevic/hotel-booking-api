@@ -1,7 +1,6 @@
 package api
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/tepavcevic/hotel-reservation/db"
 	"github.com/tepavcevic/hotel-reservation/types"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type AuthHandler struct {
@@ -51,11 +49,9 @@ func (ah *AuthHandler) HandleAuthenticate(c *fiber.Ctx) error {
 	}
 	user, err := ah.userStore.GetUserByEmail(c.Context(), authParams.Email)
 	if err != nil {
-		if errors.Is(err, mongo.ErrNoDocuments) {
-			return invalidCredentials(c)
-		}
-		return err
+		return invalidCredentials(c)
 	}
+	fmt.Println(user)
 	if !types.IsValidPassword(user.PasswordHash, authParams.Password) {
 		return invalidCredentials(c)
 	}
@@ -75,7 +71,6 @@ func CreateTokenFromUser(user *types.User) string {
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	secret := os.Getenv("JWT_SECRET")
-	fmt.Println(secret)
 	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
 		fmt.Println("create token:", err)

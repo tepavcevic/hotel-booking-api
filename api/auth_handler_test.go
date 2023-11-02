@@ -22,8 +22,8 @@ func TestAuthenticate(t *testing.T) {
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
 	authParams := AuthParams{
-		Email:    "mario@dreznjak.com",
-		Password: "greatestpasswordever",
+		Email:    "Mario@Dreznjak.com",
+		Password: "Mario_Dreznjak",
 	}
 	b, _ := json.Marshal(authParams)
 
@@ -61,7 +61,7 @@ func TestAuthenticatePasswordFailure(t *testing.T) {
 	app.Post("/auth", authHandler.HandleAuthenticate)
 
 	authParams := AuthParams{
-		Email:    "mario@dreznjak.com",
+		Email:    "Mario@Dreznjak.com",
 		Password: "wrongpsswrd",
 	}
 	b, _ := json.Marshal(authParams)
