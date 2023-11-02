@@ -50,4 +50,10 @@ func main() {
 	room := fixtures.AddRoom(&store, types.NormalRoom, false, 123.33, hotel.ID)
 	booking := fixtures.AddBooking(&store, room.ID, user.ID, time.Now(), time.Now().AddDate(0, 0, 5), 3)
 	fmt.Println(booking)
+
+	for i := 0; i < 100; i++ {
+		name := fmt.Sprintf("random fake hotel %d", i)
+		location := fmt.Sprintf("random location %d", i)
+		fixtures.AddHotel(&store, name, location, i%10+1, nil)
+	}
 }
