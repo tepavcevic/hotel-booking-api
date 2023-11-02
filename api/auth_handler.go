@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -73,7 +74,8 @@ func CreateTokenFromUser(user *types.User) string {
 		"expires": expires,
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	secret := "dsds" // os.Getenv("JWT_SECRET")
+	secret := os.Getenv("JWT_SECRET")
+	fmt.Println(secret)
 	tokenStr, err := token.SignedString([]byte(secret))
 	if err != nil {
 		fmt.Println("create token:", err)
