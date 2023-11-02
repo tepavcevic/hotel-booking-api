@@ -3,6 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -40,7 +41,7 @@ func validateToken(tokenString string) (jwt.MapClaims, error) {
 			fmt.Printf("unexpected signing method: %v", token.Header["alg"])
 			return nil, fiber.ErrUnauthorized
 		}
-		secret := "dsds" // os.Getenv("JWT_SECRET")
+		secret := os.Getenv("JWT_SECRET")
 		return []byte(secret), nil
 	})
 	if err != nil {

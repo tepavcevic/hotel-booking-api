@@ -2,10 +2,11 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/joho/godotenv"
 	"github.com/tepavcevic/hotel-reservation/api"
 	"github.com/tepavcevic/hotel-reservation/api/middleware"
 	"github.com/tepavcevic/hotel-reservation/db"
@@ -25,19 +26,20 @@ var config = fiber.Config{
 }
 
 func main() {
-	listenAddr := flag.String("listenAddr", ":8080", "Port for our server")
-	flag.Parse()
-
-	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(db.DBURI))
+	var (
+		dbURI  = os.Getenv("DB_URI")
+		dbName = os.Getenv("DB_NAME")
+	)
+	client, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(dbURI))
 	if err != nil {
 		log.Fatal(err)
 	}
 	// store, handler and fiber initializations
 	var (
-		userStore    = db.NewMongoUserStore(client, db.DBNAME, usersColl)
-		hotelStore   = db.NewMongoHotelStore(client, db.DBNAME, hotelsColl)
-		roomsStore   = db.NewMongoRoomStore(client, db.DBNAME, roomsColl, hotelStore)
-		bookingStore = db.NewMongoBookingStore(client, db.DBNAME, bookingsColl)
+		userStore    = db.NewMongoUserStore(client, dbName, usersColl)
+		hotelStore   = db.NewMongoHotelStore(client, dbName, hotelsColl)
+		roomsStore   = db.NewMongoRoomStore(client, dbName, roomsColl, hotelStore)
+		bookingStore = db.NewMongoBookingStore(client, dbName, bookingsColl)
 		store        = &db.Store{
 			User:    userStore,
 			Hotel:   hotelStore,
@@ -75,5 +77,12 @@ func main() {
 
 	admin.Get("/bookings", bookingHandler.HandleGetBookings)
 
-	app.Listen(*listenAddr)
+	listenAddr := os.Getenv("HTTP_LISTEN_ADDRESS")
+	app.Listen(listenAddr)
+}
+
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
 }

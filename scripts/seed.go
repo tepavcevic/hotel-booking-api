@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/tepavcevic/hotel-reservation/api"
 	"github.com/tepavcevic/hotel-reservation/db"
 	"github.com/tepavcevic/hotel-reservation/db/fixtures"
@@ -26,21 +28,28 @@ var (
 )
 
 func main() {
-	ctx := context.Background()
-	var err error
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(db.DBURI))
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
+	var (
+		dbURI  = os.Getenv("DB_URI")
+		dbName = os.Getenv("DB_NAME")
+		ctx    = context.Background()
+		err    error
+	)
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(dbURI))
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := client.Database(db.DBNAME).Drop(ctx); err != nil {
+	if err := client.Database(dbName).Drop(ctx); err != nil {
 		log.Fatal(err)
 	}
-	hotelStore = db.NewMongoHotelStore(client, db.DBNAME, hotelCollName)
+	hotelStore = db.NewMongoHotelStore(client, dbName, hotelCollName)
 	store := db.Store{
-		User:    db.NewMongoUserStore(client, db.DBNAME, userCollName),
+		User:    db.NewMongoUserStore(client, dbName, userCollName),
 		Hotel:   hotelStore,
-		Room:    db.NewMongoRoomStore(client, db.DBNAME, roomCollName, hotelStore),
-		Booking: db.NewMongoBookingStore(client, db.DBNAME, bookingCollName),
+		Room:    db.NewMongoRoomStore(client, dbName, roomCollName, hotelStore),
+		Booking: db.NewMongoBookingStore(client, dbName, bookingCollName),
 	}
 	user := fixtures.AddUser(&store, "Jaes", "Nunes", false)
 	fmt.Println("Jaes ->", api.CreateTokenFromUser(user))
