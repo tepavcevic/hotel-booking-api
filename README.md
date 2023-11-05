@@ -14,6 +14,10 @@ Hotel Booking is a simple REST API that allows users to make bookings for a give
 ### Running the application locally using Go and Docker
 
 ```zsh
+  docker run --name mongodb -d mongo:latest -p 27017:27017
+```
+
+```zsh
   make run
 ```
 
